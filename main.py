@@ -57,8 +57,11 @@ def main():
     print(lte.shape)
     print(lte[0][0].shape)
     zeroes = [i for i in range(1, lte[0][0].shape[0]+1)]
-    plt.plot(zeroes, lte[0, 0, :])
+    plt.plot(zeroes, lte[0, 0, :], label = "original")
+    altered = lte + 1
+    plt.plot(zeroes, altered[0, 0, :], label = "plus one")
     plt.title("aaaaaaaa")
+    plt.legend(loc = "best")
     plt.savefig("output.png")
     print(vectors.shape)
 
