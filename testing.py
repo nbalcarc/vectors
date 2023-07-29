@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import torch
+import torch.nn as nn
+import torch.optim as optim
 
 import data
 
@@ -35,10 +37,54 @@ def torch_testing():
     vectors = torch.from_numpy(vectors)
     lte = torch.from_numpy(lte)
 
-    print(lte.shape)
-    print(type(lte))
-    print(lte.type())
-    print(lte.dtype)
+    lte_10 = lte[:, 0, :] #0 for 10, 1 for 30, 2 for 50
+    print(lte_10.shape)
+
+    # training on vectors (size 1024)
+    X_train = vectors[:31].reshape(-1, 1024)
+    y_train = lte_10[:31].reshape(-1, 1)
+    X_test = vectors[31].reshape(-1, 1024)
+    y_test = lte_10[31].reshape(-1, 1)
+
+    print(X_train.shape)
+    print(y_train.shape)
+
+    model = nn.Sequential(
+        nn.Linear(1024, 2048),
+        nn.LeakyReLU(),
+        nn.Linear(2048, 512),
+        nn.LeakyReLU(),
+        nn.Linear(512, 1),
+        nn.Sigmoid()
+        )
+    print(model)
+
+    loss_fn = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr = 0.001)
+
+    n_epochs = 100
+    batch_size = 10
+
+    for epoch in range(n_epochs):
+        for i in range(0, len(X_train), batch_size):
+            Xbatch = X_train[i:i+batch_size]
+            y_pred = model(Xbatch)
+            ybatch = y_train[i:i+batch_size]
+            loss = loss_fn(y_pred, ybatch)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        print(f'Finished epoch {epoch}, latest loss {loss}')
+
+    # compute accuracy (no_grad is optional)
+    with torch.no_grad():
+        y_pred = model(X_train)
+
+    accuracy = (y_pred.round() == y_train).float().mean()
+    print(f"Accuracy {accuracy}")
+
+
+
 
 
 
