@@ -32,36 +32,33 @@ def matplotlib_testing1():
     plt.savefig("output.png")
 
 
-def torch_testing_basic():
+def torch_testing_binary():
     # load the dataset, split into input (X) and output (y) variables
     dataset = np.loadtxt('test_data.csv', delimiter=',')
     X = dataset[:,0:8]
     y = dataset[:,8]
 
-    X = torch.tensor(X, dtype=torch.float32)
-    y = torch.tensor(y, dtype=torch.float32).reshape(-1, 1)
+    print(X.shape)
+    print(y.shape)
 
-# define the model
-    class PimaClassifier(nn.Module):
-        def __init__(self):
-            super().__init__()
-            self.hidden1 = nn.Linear(8, 12)
-            self.act1 = nn.ReLU()
-            self.hidden2 = nn.Linear(12, 8)
-            self.act2 = nn.ReLU()
-            self.output = nn.Linear(8, 1)
-            self.act_output = nn.Sigmoid()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
 
-        def forward(self, x):
-            x = self.act1(self.hidden1(x))
-            x = self.act2(self.hidden2(x))
-            x = self.act_output(self.output(x))
-            return x
+    X = torch.tensor(X, dtype=torch.float32).to(device)
+    y = torch.tensor(y, dtype=torch.float32).reshape(-1, 1).to(device)
 
-    model = PimaClassifier()
+    model = nn.Sequential(
+        nn.Linear(8, 12),
+        nn.ReLU(),
+        nn.Linear(12, 8),
+        nn.ReLU(),
+        nn.Linear(8, 1),
+        nn.Sigmoid()
+        ).to(device)
+
     print(model)
 
-# train the model
+    # train the model
     loss_fn   = nn.BCELoss()  # binary cross entropy
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -78,24 +75,22 @@ def torch_testing_basic():
             loss.backward()
             optimizer.step()
 
-# compute accuracy
+    # compute accuracy
     y_pred = model(X)
     accuracy = (y_pred.round() == y).float().mean()
     print(f"Accuracy {accuracy}")
 
-# make class predictions with the model
+    # make class predictions with the model
     predictions = (model(X) > 0.5).int()
     for i in range(5):
         print('%s => %d (expected %d)' % (X[i].tolist(), predictions[i], y[i]))
 
 
-
-def torch_testing():
+def torch_testing_regression():
     state_vectors, vectors, lte = data.load_data()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
-
 
     state_vectors = torch.from_numpy(state_vectors)
     vectors = torch.from_numpy(vectors)
@@ -105,28 +100,106 @@ def torch_testing():
     print(lte_10.shape)
 
     # training on vectors (size 1024)
-    X_train = vectors[:31].reshape(-1, 1024)
-    y_train = lte_10[:31].reshape(-1, 1)
-    X_test = vectors[31].reshape(-1, 1024)
-    y_test = lte_10[31].reshape(-1, 1)
+    X_train = vectors[:31].reshape(-1, 1024).to(device)
+    y_train = lte_10[:31].reshape(-1, 1).to(device)
+    X_test = vectors[31].reshape(-1, 1024).to(device)
+    y_test = lte_10[31].reshape(-1, 1).to(device)
 
     print(X_train.shape)
     print(y_train.shape)
 
+    print(y_train)
+
     model = nn.Sequential(
-        nn.Linear(1024, 2048),
-        nn.LeakyReLU(),
-        nn.Linear(2048, 512),
-        nn.LeakyReLU(),
+        nn.Linear(1024, 1024),
+        nn.ReLU(),
+        nn.Linear(1024, 512),
+        nn.ReLU(),
         nn.Linear(512, 1),
-        nn.Sigmoid()
-        )
+        #nn.Sigmoid()
+        ).to(device)
     print(model)
 
+    #loss_fn = nn.BCELoss()
     loss_fn = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr = 0.001)
+    optimizer = optim.Adam(model.parameters(), lr = 0.0001)
 
     n_epochs = 100
+    losses = np.zeros(n_epochs)
+    batch_size = 10
+    loss = 0  #ease type errors
+
+    best_mse = np.inf
+    best_weights = None
+    history = []
+    
+    #training loop
+    for epoch in range(n_epochs):
+        model.train()
+        for i in range(0, len(X_train), batch_size):
+            # initialize batches
+            X_batch = X_train[i:i+batch_size]
+            y_batch = y_train[i:i+batch_size]
+
+            # forward pass
+            y_pred = model(X_batch)
+            loss = loss_fn(y_pred, y_batch)
+
+            # backward pass
+            optimizer.zero_grad()
+            loss.backward()
+
+            optimizer.step()  #update weights
+
+        model.eval()
+        y_pred = model(X_test)
+        mse = loss_fn(y_pred, y_test)
+        print(f'Finished epoch {epoch}, latest loss {loss}')
+        losses[epoch] = loss
+
+    print(losses)
+        
+
+
+def torch_testing():
+    state_vectors, vectors, lte = data.load_data()
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
+
+    state_vectors = torch.from_numpy(state_vectors)
+    vectors = torch.from_numpy(vectors)
+    lte = torch.from_numpy(lte)
+
+    lte_10 = lte[:, 0, :] #0 for 10, 1 for 30, 2 for 50
+    print(lte_10.shape)
+
+    # training on vectors (size 1024)
+    X_train = vectors[:31].reshape(-1, 1024).to(device)
+    y_train = lte_10[:31].reshape(-1, 1).to(device)
+    X_test = vectors[31].reshape(-1, 1024).to(device)
+    y_test = lte_10[31].reshape(-1, 1).to(device)
+
+    print(X_train.shape)
+    print(y_train.shape)
+
+    print(y_train)
+
+    model = nn.Sequential(
+        nn.Linear(1024, 1024),
+        nn.ReLU(),
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Linear(512, 1),
+        nn.Sigmoid()
+        ).to(device)
+    print(model)
+
+    #loss_fn = nn.BCELoss()
+    loss_fn = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr = 0.0001)
+
+    n_epochs = 10
     batch_size = 10
     loss = 0  #ease type warnings
 
@@ -142,9 +215,9 @@ def torch_testing():
         print(f'Finished epoch {epoch}, latest loss {loss}')
 
     # compute accuracy (no_grad is optional)
-    with torch.no_grad():
-        y_pred = model(X_train)
-
+    #with torch.no_grad():
+    #    y_pred = model(X_train)
+    y_pred = model(X_train)
     accuracy = (y_pred.round() == y_train).float().mean()
     print(f"Accuracy {accuracy}")
 
