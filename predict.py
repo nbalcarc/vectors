@@ -21,8 +21,8 @@ def predict_data():
     lte_50 = lte[:, 2, :]
     #print(lte_10.shape)
 
-    for i in range(6):
-        match i:
+    for i_setting in range(6):
+        match i_setting:
             case 0:
                 cur_lte = lte_10
                 cur_vec = state_vectors
@@ -42,7 +42,7 @@ def predict_data():
                 cur_lte = lte_50
                 cur_vec = vectors
 
-        if i < 3:
+        if i_setting < 3:
             # training on state_vectors (size 2048)
             X_train = cur_vec[:31].reshape(-1, 2048).to(device)
             y_train = cur_lte[:31].reshape(-1, 1).to(device)
@@ -85,7 +85,7 @@ def predict_data():
         batch_size = 10
         loss = 0  #ease type errors
 
-        print(f"=== Training model {i} of 6 === ")
+        print(f"=== Training model {i_setting + 1} of 6 === ")
 
         #training loop
         for epoch in range(n_epochs):
@@ -112,17 +112,18 @@ def predict_data():
             history[epoch] = true_loss
 
         # graph results
+        plt.clf()
         plt.plot(np.arange(n_epochs), history, label = "original")
         plt.title("Loss Over Time")
 
         file = ""
-        if i < 3:
-            file += "output_state_vectors_"
+        if i_setting < 3:
+            file += f"output{i_setting}_state_vectors_"
         else:
-            file += "output_vectors_"
-        if i % 3 == 0:
+            file += f"output{i_setting}_vectors_"
+        if i_setting % 3 == 0:
             file += "lte10.png"
-        elif i % 3 == 1:
+        elif i_setting % 3 == 1:
             file += "lte30.png"
         else:
             file += "lte50.png"
