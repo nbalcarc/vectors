@@ -14,16 +14,28 @@ pub struct Data {
     pub lte: Vec<f32>,           // 32 * 3 * 252
 }
 impl Data {
-    pub fn index_state_vectors(&self, index: usize, index1: usize, index2: usize) -> f32 {
-        self.state_vectors[index*516096 + index1*2048 + index2]
+    /// Returns the given index in self.state_vectors, None implies invalid indices
+    pub fn index_state_vectors(&self, index: usize, index1: usize, index2: usize) -> Option<f32> {
+        if index >= 32 || index1 >= 252 || index2 > 2048 {
+            return None;
+        }
+        Some(self.state_vectors[index*516096 + index1*2048 + index2])
     }
 
-    pub fn index_vectors(&self, index: usize, index1: usize, index2: usize) -> f32 {
-        self.state_vectors[index*258048 + index1*1024 + index2]
+    /// Returns the given index in self.vectors, None implies invalid indices
+    pub fn index_vectors(&self, index: usize, index1: usize, index2: usize) -> Option<f32> {
+        if index >= 32 || index1 >= 252 || index2 > 1024 {
+            return None;
+        }
+        Some(self.state_vectors[index*258048 + index1*1024 + index2])
     }
 
-    pub fn index_lte(&self, index: usize, index1: usize, index2: usize) -> f32 {
-        self.state_vectors[index*756 + index1*252 + index2]
+    /// Returns the given index in self.lte, None implies invalid indices
+    pub fn index_lte(&self, index: usize, index1: usize, index2: usize) -> Option<f32> {
+        if index >= 32 || index1 >= 3 || index2 > 252 {
+            return None;
+        }
+        Some(self.state_vectors[index*756 + index1*252 + index2])
     }
 }
 
