@@ -1,6 +1,8 @@
-vectors.pkl
-state_vectors.pkl
-LTE.pkl
-output.png
-__pycache__
+playground/output.png
+simple/target
+
+**/__pycache__
+**/*.pkl
+**/*.npy
+**/*.data
 

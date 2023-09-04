@@ -47,4 +47,12 @@ def load_data() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.N
 
     return state_vectors, vectors, lte
 
+def save_data_interoperable():
+    """Saves the data as a raw binary file, good for language interoperability."""
+    state_vectors, vectors, lte = read_data()
+    state_vectors.tofile("state_vectors.data")
+    vectors.tofile("vectors.data")
+    lte.tofile("lte.data")
+
+
 
