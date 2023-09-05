@@ -22,15 +22,15 @@ def similarity():
     cosine_similarities = np.zeros(251)
 
     # individual vector processing
-    for i in range(len(cur_vecs)):
+    for i in range(252):
         angle_mag = np.zeros(2048)
-        for j in range(cur_vecs[i].shape[0]-1):
+        for j in range(2047): #want to leave the final index empty, that's where the magnitude goes
             angle_mag[j] = math.atan2(cur_vecs[i][j], cur_vecs[i][j+1])
         angle_mag[2047] = np.linalg.norm(cur_vecs[i])
         angle_mags[i] = angle_mag
 
     # comparative vector processing
-    for i in range(len(cur_vecs)-1):
+    for i in range(251):
         euclidean_distances[i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
         cosine_similarities[i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
 
