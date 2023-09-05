@@ -1,6 +1,7 @@
 import data
 import predict
 import testing
+import compute
 
 
 def main():
@@ -8,9 +9,10 @@ def main():
     #testing.torch_testing()
     #testing.torch_testing_regression()
 
-    data.save_data_interoperable()
+    #data.save_data_interoperable()
 
     #predict.predict_data()
+    compute.similarity()
 
 
 if __name__ == "__main__":
