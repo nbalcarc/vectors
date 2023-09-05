@@ -5,4 +5,7 @@ simple/target
 **/*.pkl
 **/*.npy
 **/*.data
+**/*.csv
+**/*.csv#
+**/*.png
 
