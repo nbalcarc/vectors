@@ -6,55 +6,88 @@ import math
 
 import data
 import columns as col
+import columns_old as coli
 
 
 def similarity():
     state_vectors, _, _ = data.load_data()
     df_raw = data.load_phenology_csv()
+    #print(df_raw)
     df: pd.DataFrame = df_raw[df_raw[col.SEASON] != "1988-1989"] #filter out 1988
     df = df[df[col.SEASON] != "2001-2002"] #filter out 2001
-    df[41] = [0] * len(df[col.DATE])
+    df = df.reset_index()
+    df[col.DORMANT_DAY] = [0] * len(df[col.DATE])
+    #print("here")
     #yy = [0] * len(df[col.DATE])
     #print(len(yy))
     #print(len(df[col.DATE]))
 
     # number all of the dates in each dormant season
+    #temp_season = ""
+    #incr = 0
+    ##dorm = df[col.DORMANT_SEASON and 41].reset_index()
+    #dorm = df[[col.DORMANT_SEASON, 41]].reset_index()
+    ##print('sup')
+    ##print(type(dorm))
+    #print(dorm)
+    ##print(dorm.keys())
+    ##print(dorm[col.DORMANT_SEASON])
+
+    #season: pd.Series = df[col.SEASON]
+
+    #print("ok done")
+    #for i in range(0, len(df.iterrows)):
+    #    print(i)
+    #    if dorm[0][i] == '0': #not in a dormant season
+    #        df[41][i] = -1
+    #    if dorm[0][i] == '1': #in dormant season
+    #        if season[0][i] != temp_season:
+    #            temp_season = season[0][i]
+    #            incr = 0
+    #            df[41][i] = incr
+    #        else:
+    #            incr += 1
+    #            df[41][i] = inc
+    print(df)
+
+    # number each day of dormancy in each season
     temp_season = ""
     incr = 0
-    #dorm = df[col.DORMANT_SEASON and 41].reset_index()
-    dorm = df[[col.DORMANT_SEASON, 41]].reset_index()
-    print('sup')
-    print(type(dorm))
-    print(dorm)
-    print(dorm.keys())
-    print(dorm[col.DORMANT_SEASON])
-
-    season: pd.Series = df[col.SEASON]
-
-    print("ok done")
-    for i in range(0, len(df[col.DATE])):
-        print(i)
-        if dorm[0][i] == '0': #not in a dormant season
-            df[41][i] = -1
-        if dorm[0][i] == '1': #in dormant season
-            if season[0][i] != temp_season:
-                temp_season = season[0][i]
+    for i, row in enumerate(df.iterrows()):
+        if row[1][col.DORMANT_SEASON] == 0: #not in a dormant season
+            incr = 0
+            #row[1][col.DORMANT_DAY] = -1 
+            df[col.DORMANT_DAY][i] = -1
+        else: #in a dormant season
+            if row[1][col.SEASON] != temp_season:
+                print(f"restarting, {incr}")
+                temp_season = row[1][col.SEASON]
                 incr = 0
-                df[41][i] = incr
+                #row[1][col.DORMANT_DAY] = 0 #first day of the dormant season
+                df[col.DORMANT_DAY][i] = 0
             else:
                 incr += 1
-                df[41][i] = incr
+                #row[1][col.DORMANT_DAY] = incr #sometime during the dormant season
+                df[col.DORMANT_DAY][i] = incr
 
+
+
+
+    #df.to_csv("output.csv") //output file with numbered dormancy days
+
+    print(df)
+    print(type(df))
     dormancy_filtered = df[df[col.DORMANT_SEASON] == '1'] #grab all the rows that are part of the dormancy season
 
-    # seasons are distinguished by the year, so we may want to number all of these
     #x = [x for x in range(0, 252)]
     #y = x * 32
     #print(x)
     #print("hi")
     #print(len(y))
-    print(len(dormancy_filtered))
-    y = list(set(dormancy_filtered[col.SEASON]))
+
+    #print(len(dormancy_filtered))
+    #y = list(set(dormancy_filtered[col.SEASON]))
+
     #y.sort()
     #print(y)
     #print(len(y))
@@ -65,9 +98,11 @@ def similarity():
     #phenology_filtered = phenology_raw.loc[isinstance(phenology_raw[col.PHENOLOGY], float)] #grab all phenology data
     #phenology_filtered = phenology_raw
     #phenology = df_raw.copy()[col.PHENOLOGY].fillna(0, inplace=True)
+
+
+
     df_raw[col.PHENOLOGY].fillna(0, inplace=True)
     phenology = df_raw[df_raw[col.PHENOLOGY] != 0]
-    
     print(phenology[col.PHENOLOGY])
 
     #print(phenology_filtered)

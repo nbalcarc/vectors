@@ -56,7 +56,8 @@ def save_data_interoperable():
     lte.tofile("lte.data")
 
 def load_phenology_csv() -> pd.DataFrame:
-    return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',', header=None)
+    #return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',')
+    return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',', header=0)
 
 
 
