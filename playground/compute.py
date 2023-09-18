@@ -45,18 +45,17 @@ def similarity():
 
 
     # grab all the rows that are part of the dormancy season
-    dormancy_filtered = df[df[col.DORMANT_SEASON] == 1]
-    print(dormancy_filtered)
+    #dormancy_filtered = df[df[col.DORMANT_SEASON] == 1]
+    #print(dormancy_filtered)
 
 
     # grab all the rows with phenology data
     df_temp = df.copy()
     df_temp[col.PHENOLOGY].fillna(0, inplace=True)
     phenology = df_temp[df_temp[col.PHENOLOGY] != 0]
+    phenology = phenology[phenology[col.DORMANT_SEASON] == 1] #filter to only within the dormancy season
     print(phenology[col.PHENOLOGY])
 
-
-    return
 
     '''
     Notes:

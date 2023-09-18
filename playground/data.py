@@ -57,7 +57,7 @@ def save_data_interoperable():
 
 def load_phenology_csv() -> pd.DataFrame:
     #return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',')
-    return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',', header=0)
+    return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',')
 
 
 
