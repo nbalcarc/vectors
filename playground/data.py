@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 
 
 def read_data() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
@@ -53,6 +54,9 @@ def save_data_interoperable():
     state_vectors.tofile("state_vectors.data")
     vectors.tofile("vectors.data")
     lte.tofile("lte.data")
+
+def load_phenology_csv() -> pd.DataFrame:
+    return pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',', header=None)
 
 
 
