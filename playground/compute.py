@@ -25,7 +25,7 @@ def similarity():
             incr = 0
             df[col.DORMANT_DAY][i] = -1
         else: #in a dormant season
-            if row[1][col.SEASON] != temp_season: #firsty day of the dormant season
+            if row[1][col.SEASON] != temp_season: #first day of the dormant season
                 temp_season = row[1][col.SEASON]
                 incr = 0
                 df[col.DORMANT_DAY][i] = 0
