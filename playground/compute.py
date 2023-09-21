@@ -3,19 +3,22 @@ import numpy.typing as npt
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import sklearn.cluster
+
 import data
 import columns as col
 
 
-def similarity():
-    state_vectors, _, _ = data.load_data()
+
+def get_phenology_dataframe() -> pd.DataFrame:
+    """Returns the phenology dataframe with dormancy days"""
     df_raw = data.load_phenology_csv()
 
-    #NOTE: in the RNN data, years 1988-1989 and 2001-2002 are excluded, which explains the size difference
+    # filter out seasons we don't have RNN data on
     df: pd.DataFrame = df_raw[df_raw[col.SEASON] != "1988-1989"] #filter out 1988
     df = df[df[col.SEASON] != "2001-2002"] #filter out 2001
     df = df.reset_index()
-    df[col.DORMANT_DAY] = [0] * len(df[col.DATE])
+    df[col.DORMANT_DAY] = [0] * len(df[col.DATE]) #prepare column for dormancy days
 
     # number each day of dormancy in each season
     temp_season = ""
@@ -33,13 +36,24 @@ def similarity():
                 incr += 1
                 df[col.DORMANT_DAY][i] = incr
 
-    #df.to_csv("output.csv") //output file with numbered dormancy days
+    return df
 
-    # grab all the rows with phenology data
-    df_temp = df.copy()
-    df_temp[col.PHENOLOGY].fillna(0, inplace=True)
-    phenology = df_temp[df_temp[col.PHENOLOGY] != 0]
-    phenology = phenology[phenology[col.DORMANT_SEASON] == 1] #filter to only within the dormancy season
+
+def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
+    """Grab the phenology data for the current season"""
+    cur: pd.DataFrame = df[df[col.SEASON] == season] #filter to only the current season
+    dorm = cur[cur[col.DORMANT_SEASON] == 1].copy() #filter to only within the dormancy season
+    dorm[col.PHENOLOGY].fillna(0, inplace=True)
+    clean = dorm[dorm[col.PHENOLOGY] != 0] #filter out NaNs
+    short: pd.DataFrame = clean[[col.PHENOLOGY, col.DORMANT_DAY]] #only care about phenology and the day
+
+    return short
+
+
+def similarity():
+    """Compute L2 distance and cosine similarity"""
+    state_vectors, _, _ = data.load_data()
+    phenology_df = get_phenology_dataframe()
 
     '''
     Notes:
@@ -70,10 +84,9 @@ def similarity():
         cur_season = seasons[i-10]
 
         # phenology data
-        cur_phenologies: pd.DataFrame = phenology[phenology[col.SEASON] == cur_season] #filter to only the current season
-        cur_phenologies = cur_phenologies[[col.PHENOLOGY, col.DORMANT_DAY]] #only care about phenology and the day
+        cur_phenologies = phenology_for_season(phenology_df, cur_season)
 
-        # simplifies the process of printing phenology data
+        # adds phenology data to the graph, asks for a y-coordinate of the labels
         def insert_phenology(y_coordinate: float):
             for row in cur_phenologies.iterrows():
                 plt.axvline(row[1][1], color = "red") #graph at the specified index
@@ -86,7 +99,7 @@ def similarity():
             euclidean_distances[i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
             cosine_similarities[i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
 
-        # euclidean / l2
+        # output graph euclidean / l2
         plt.close()
         plt.clf()
         plt.figure(figsize = (6.4, 4.8), dpi = 100)
@@ -95,7 +108,7 @@ def similarity():
         insert_phenology(0.5)
         plt.savefig("output_graphs/euclidean_" + cur_season + ".png")
 
-        # cosine similarity
+        # output graph cosine similarity
         plt.close()
         plt.clf()
         plt.figure(figsize = (6.4, 4.8), dpi = 100)
@@ -104,6 +117,13 @@ def similarity():
         insert_phenology(1450)
         plt.savefig("output_graphs/cosine_" + cur_season + ".png")
 
+
+def dbscan():
+    model = sklearn.cluster.DBSCAN(
+            eps = 3.0, #maximum distance for two points to be in the same neighborhood
+            min_samples = 4,#samples required to be considered a core point
+            )
+    fitted = model.fit #need to fit to X, must find what X to give it
 
 
 
