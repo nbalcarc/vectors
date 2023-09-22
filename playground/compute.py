@@ -10,34 +10,6 @@ import columns as col
 
 
 
-def get_phenology_dataframe() -> pd.DataFrame:
-    """Returns the phenology dataframe with dormancy days"""
-    df_raw = data.load_phenology_csv()
-
-    # filter out seasons we don't have RNN data on
-    df: pd.DataFrame = df_raw[df_raw[col.SEASON] != "1988-1989"] #filter out 1988
-    df = df[df[col.SEASON] != "2001-2002"] #filter out 2001
-    df = df.reset_index()
-    df[col.DORMANT_DAY] = [0] * len(df[col.DATE]) #prepare column for dormancy days
-
-    # number each day of dormancy in each season
-    temp_season = ""
-    incr = 0
-    for i, row in enumerate(df.iterrows()):
-        if row[1][col.DORMANT_SEASON] == 0: #not in a dormant season
-            incr = 0
-            df[col.DORMANT_DAY][i] = -1
-        else: #in a dormant season
-            if row[1][col.SEASON] != temp_season: #first day of the dormant season
-                temp_season = row[1][col.SEASON]
-                incr = 0
-                df[col.DORMANT_DAY][i] = 0
-            else: #sometime during the dormant season
-                incr += 1
-                df[col.DORMANT_DAY][i] = incr
-
-    return df
-
 
 def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     """Grab the phenology data for the current season"""
@@ -52,8 +24,8 @@ def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
 
 def similarity():
     """Compute L2 distance and cosine similarity"""
-    state_vectors, _, _ = data.load_data()
-    phenology_df = get_phenology_dataframe()
+    state_vectors, _, _ = data.load_data_numpy()
+    phenology_df = data.get_phenology_dataframe()
 
     '''
     Notes:
@@ -62,6 +34,11 @@ def similarity():
     with 2048 dimensions, this means a vector can be a maximum of 45.254833995939045 in length (sqrt of 2048)
 
     want to output graphs for seasons 2002-2003 through 2011-2012, which are indices 10 through 19
+
+    want to compute different clusters of points, and these clusters will color the points on the graph
+        - a cluster could be revisted later theoretically, so it will have two+ areas of the graph of the same color
+
+    consider splitting data module into subtree of io, functions, etc
 
     '''
 
@@ -119,11 +96,24 @@ def similarity():
 
 
 def dbscan():
+    state_vectors, _, _ = data.load_data_numpy()
+
     model = sklearn.cluster.DBSCAN(
             eps = 3.0, #maximum distance for two points to be in the same neighborhood
             min_samples = 4,#samples required to be considered a core point
             )
-    fitted = model.fit #need to fit to X, must find what X to give it
+
+    for i in range(10, 20): #cover each season
+        cur_states = state_vectors[i] #grab state vectors for just this season
+        fitted = model.fit(cur_states) #need to fit to X, must find what X to give it
+        print(fitted.labels_)
+        print(fitted.labels_.shape)
+        print(np.max(fitted.labels_))
+
+    print(state_vectors.shape)
+
+
+
 
 
 

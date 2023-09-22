@@ -12,7 +12,7 @@ def main():
     #data.save_data_interoperable()
     #data.save_data()
 
-    #predict.predict_data()
+    compute.dbscan()
     compute.similarity()
 
 
