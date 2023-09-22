@@ -133,6 +133,57 @@ def dbscan():
     print(state_vectors.shape)
 
 
+def k_span():
+    state_vectors, _, _ = data.load_data_numpy()
+    phenology_df = data.get_phenology_dataframe()
+
+    # for each group size
+    for k in [5, 10]: #the max number of points we'll look forward
+        distances = np.zeros(250 - k)
+
+        # for each season
+        for s in range(10, 20): #cover each season
+            cur_season = seasons[s-10]
+            cur_states = state_vectors[s][1:-1] #grab state vectors for just this season
+
+            # for each day
+            for i in range(250 - k): #don't overshoot the number of comparisons
+                points = cur_states[i:i+k+1] #all the points we'll be comparing
+                max = 0
+
+                #find the max distance between the points
+                for p in range(k+1): #for each point
+                    for q in range(k+1): #for every other point
+                        if p == q: #skip when we're comparing a day to itself
+                            continue
+                        else:
+                            dist = np.linalg.norm(points[p]-points[q])
+                            #euclidean_distances[i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
+                            if dist > max:
+                                max = dist
+
+                distances[i] = max
+
+            # phenology data
+            cur_phenologies = phenology_for_season(phenology_df, cur_season)
+
+            # output graph k-span
+            plt.close()
+            plt.clf()
+            plt.figure(figsize = (6.4, 4.8), dpi = 100)
+            plt.plot(list(range(1,251-k)), distances)
+            #plt.title(f"DBSCAN {cur_season} eps={eps}, min_samples={min_samples}")
+            plt.title(f"K-span({k}) {cur_season}")
+            insert_phenology(cur_phenologies, 3)
+            plt.savefig(f"output_graphs/kspan{k}_" + cur_season + ".png")
+
+            
+
+        
+
+
+
+
 
 
 

@@ -12,8 +12,9 @@ def main():
     #data.save_data_interoperable()
     #data.save_data()
 
-    compute.dbscan()
     compute.similarity()
+    compute.dbscan()
+    compute.k_span()
 
 
 if __name__ == "__main__":
