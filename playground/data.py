@@ -60,7 +60,7 @@ def convert_data_interoperable():
 
 def get_phenology_dataframe() -> pd.DataFrame:
     """Returns the phenology dataframe with dormancy days"""
-    df_raw = pd.read_csv('ColdHardiness_Grape_Riesling.csv', sep=',')
+    df_raw = pd.read_csv('ColdHardiness_Grape_Prosser_Riesling.csv', sep=',')
 
     # filter out seasons we don't have RNN data on
     df: pd.DataFrame = df_raw[df_raw[col.SEASON] != "1988-1989"] #filter out 1988

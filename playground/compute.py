@@ -9,6 +9,18 @@ import data
 import columns as col
 
 
+seasons = [
+        "2002-2003",
+        "2003-2004",
+        "2004-2005",
+        "2005-2006",
+        "2006-2007",
+        "2007-2008",
+        "2008-2009",
+        "2009-2010",
+        "2010-2011",
+        "2011-2012",
+        ]
 
 
 def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
@@ -20,6 +32,14 @@ def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     short: pd.DataFrame = clean[[col.PHENOLOGY, col.DORMANT_DAY]] #only care about phenology and the day
 
     return short
+
+
+
+# adds phenology data to the graph, asks for a y-coordinate of the labels
+def insert_phenology(phenologies: pd.DataFrame, y_coordinate: float):
+    for row in phenologies.iterrows():
+        plt.axvline(row[1][1], color = "red") #graph at the specified index
+        plt.text(row[1][1], y_coordinate, row[1][0], rotation=90, alpha=0.5) #add a phenology label
 
 
 def similarity():
@@ -42,73 +62,73 @@ def similarity():
 
     '''
 
-    seasons = [
-            "2002-2003",
-            "2003-2004",
-            "2004-2005",
-            "2005-2006",
-            "2006-2007",
-            "2007-2008",
-            "2008-2009",
-            "2009-2010",
-            "2010-2011",
-            "2011-2012",
-            ]
-
     # iterate through all 10 seasons
     for i in range(10, 20):
-        cur_vecs: npt.NDArray[np.float32] = state_vectors[i]
+        cur_vecs: npt.NDArray[np.float32] = state_vectors[i][1:-1] #exclude first and last days
         cur_season = seasons[i-10]
+
+        # comparisons
+        euclidean_distances = np.zeros(249)
+        cosine_similarities = np.zeros(249)
+        for i in range(249):
+            euclidean_distances[i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
+            cosine_similarities[i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
 
         # phenology data
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
-
-        # adds phenology data to the graph, asks for a y-coordinate of the labels
-        def insert_phenology(y_coordinate: float):
-            for row in cur_phenologies.iterrows():
-                plt.axvline(row[1][1], color = "red") #graph at the specified index
-                plt.text(row[1][1], y_coordinate, row[1][0], rotation=90) #add a phenology label
-
-        # comparisons
-        euclidean_distances = np.zeros(251)
-        cosine_similarities = np.zeros(251)
-        for i in range(251):
-            euclidean_distances[i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
-            cosine_similarities[i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
 
         # output graph euclidean / l2
         plt.close()
         plt.clf()
         plt.figure(figsize = (6.4, 4.8), dpi = 100)
-        plt.plot(list(range(1, 250)), euclidean_distances[1:-1]) #skip the first and last indices
-        plt.title("Euclidean Distances")
-        insert_phenology(0.5)
+        plt.plot(list(range(1, 250)), euclidean_distances)
+        plt.title("Euclidean Distances " + cur_season)
+        insert_phenology(cur_phenologies, 0.5)
         plt.savefig("output_graphs/euclidean_" + cur_season + ".png")
 
         # output graph cosine similarity
         plt.close()
         plt.clf()
         plt.figure(figsize = (6.4, 4.8), dpi = 100)
-        plt.plot(list(range(1, 250)), cosine_similarities[1:-1])
-        plt.title("Cosine Similarities")
-        insert_phenology(1450)
+        plt.plot(list(range(1, 250)), cosine_similarities)
+        plt.title("Cosine Similarities " + cur_season)
+        insert_phenology(cur_phenologies, 1450)
         plt.savefig("output_graphs/cosine_" + cur_season + ".png")
 
 
 def dbscan():
     state_vectors, _, _ = data.load_data_numpy()
+    phenology_df = data.get_phenology_dataframe()
+
+    eps = 3.0 #maximum distance for two points to be in the same neighborhood
+    min_samples = 4 #samples required to be considered a core point
 
     model = sklearn.cluster.DBSCAN(
-            eps = 3.0, #maximum distance for two points to be in the same neighborhood
-            min_samples = 4,#samples required to be considered a core point
+            eps = eps,
+            min_samples = min_samples,
             )
 
     for i in range(10, 20): #cover each season
-        cur_states = state_vectors[i] #grab state vectors for just this season
+        cur_season = seasons[i-10]
+
+        cur_states = state_vectors[i][1:-1] #grab state vectors for just this season
         fitted = model.fit(cur_states) #need to fit to X, must find what X to give it
-        print(fitted.labels_)
-        print(fitted.labels_.shape)
-        print(np.max(fitted.labels_))
+        #print(fitted.labels_)
+        #print(fitted.labels_.shape)
+        #print(np.max(fitted.labels_))
+
+        # phenology data
+        cur_phenologies = phenology_for_season(phenology_df, cur_season)
+
+        # output graph dbscan
+        plt.close()
+        plt.clf()
+        plt.figure(figsize = (6.4, 4.8), dpi = 100)
+        plt.plot(list(range(1,251)), fitted.labels_)
+        #plt.title(f"DBSCAN {cur_season} eps={eps}, min_samples={min_samples}")
+        plt.title(f"DBSCAN {cur_season}")
+        insert_phenology(cur_phenologies, 0.5)
+        plt.savefig("output_graphs/dbscan_" + cur_season + ".png")
 
     print(state_vectors.shape)
 
