@@ -9,41 +9,15 @@ import data
 import columns as col
 
 
-seasons = [
-        "2002-2003",
-        "2003-2004",
-        "2004-2005",
-        "2005-2006",
-        "2006-2007",
-        "2007-2008",
-        "2008-2009",
-        "2009-2010",
-        "2010-2011",
-        "2011-2012",
-        ]
-
-
-def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
-    """Grab the phenology data for the current season"""
-    cur: pd.DataFrame = df[df[col.SEASON] == season] #filter to only the current season
-    dorm = cur[cur[col.DORMANT_SEASON] == 1].copy() #filter to only within the dormancy season
-    dorm[col.PHENOLOGY].fillna(0, inplace=True)
-    clean = dorm[dorm[col.PHENOLOGY] != 0] #filter out NaNs
-    short: pd.DataFrame = clean[[col.PHENOLOGY, col.DORMANT_DAY]] #only care about phenology and the day
-
-    return short
 
 
 
-# adds phenology data to the graph, asks for a y-coordinate of the labels
-def insert_phenology(phenologies: pd.DataFrame, y_coordinate: float):
-    for row in phenologies.iterrows():
-        plt.axvline(row[1][1], color = "red") #graph at the specified index
-        plt.text(row[1][1], y_coordinate, row[1][0], rotation=90, alpha=0.5) #add a phenology label
+
+
 
 
 def similarity() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
-    """Compute L2 distance and cosine similarity"""
+    """Compute L2 distance and cosine similarity, returns sizes 249 and 249"""
     state_vectors, _, _ = data.load_data_numpy()
     #phenology_df = data.get_phenology_dataframe()
     ret_l2 = np.zeros((10, 249), dtype = np.float32)
@@ -103,6 +77,7 @@ def similarity() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
 
 
 def dbscan() -> npt.NDArray[np.int32]:
+    """Runs DBSCAN, returns size 250"""
     state_vectors, _, _ = data.load_data_numpy()
     #phenology_df = data.get_phenology_dataframe()
     ret = np.zeros((10, 250), dtype = np.int32)
@@ -115,10 +90,10 @@ def dbscan() -> npt.NDArray[np.int32]:
             min_samples = min_samples,
             )
 
-    for i in range(10, 20): #cover each season
+    for s in range(10, 20): #cover each season
         #cur_season = seasons[i-10]
 
-        cur_states = state_vectors[i][1:-1] #grab state vectors for just this season
+        cur_states = state_vectors[s][1:-1] #grab state vectors for just this season
         fitted = model.fit(cur_states) #need to fit to X, must find what X to give it
         #print(type(fitted.labels_))
         #print(fitted.labels_.shape)
@@ -139,13 +114,14 @@ def dbscan() -> npt.NDArray[np.int32]:
         #insert_phenology(cur_phenologies, 0.5)
         #plt.savefig("output_graphs/dbscan_" + cur_season + ".png")
 
-        ret[i-10] = fitted.labels_
+        ret[s-10] = fitted.labels_
 
     #print(state_vectors.shape)
     return ret
 
 
 def k_span(k: int) -> npt.NDArray[np.float32]:
+    """Runs Ananth's K-scan, returns size 250-k"""
     state_vectors, _, _ = data.load_data_numpy()
     #phenology_df = data.get_phenology_dataframe()
     ret = np.zeros((10, 250-k), dtype = np.float32)
