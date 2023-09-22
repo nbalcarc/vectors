@@ -100,6 +100,27 @@ def main():
         insert_phenology(cur_phenologies, 3)
         plt.savefig(f"output_graphs/kspan10_" + cur_season + ".png")
 
+        # output graph k-span 5 overlaid with dbscan
+        plt.close()
+        plt.clf()
+        plt.figure(figsize = (6.4, 4.8), dpi = 100)
+        plt.plot(list(range(1,246)), k5[s-10])
+        plt.plot(list(range(1,251)), dbscan[s-10])
+        plt.title(f"K-span(5) with DBSCAN {cur_season}")
+        insert_phenology(cur_phenologies, 3)
+        plt.savefig(f"output_graphs/dbscan_kspan5_" + cur_season + ".png")
+
+        # output graph k-span 10 overlaid with dbscan
+        plt.close()
+        plt.clf()
+        plt.figure(figsize = (6.4, 4.8), dpi = 100)
+        plt.plot(list(range(1,241)), k10[s-10])
+        plt.plot(list(range(1,251)), dbscan[s-10])
+        plt.title(f"K-span(10) with DBSCAN {cur_season}")
+        insert_phenology(cur_phenologies, 3)
+        plt.savefig(f"output_graphs/dbscan_kspan10_" + cur_season + ".png")
+
+
 
 def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     """Grab the phenology data for the current season"""
@@ -112,8 +133,8 @@ def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     return short
 
 
-# adds phenology data to the graph, asks for a y-coordinate of the labels
 def insert_phenology(phenologies: pd.DataFrame, y_coordinate: float):
+    """Adds phenology data to the grpah, asks for a y-coordinate of the labels"""
     for row in phenologies.iterrows():
         plt.axvline(row[1][1], color = "red") #graph at the specified index
         plt.text(row[1][1], y_coordinate, row[1][0], rotation=90, alpha=0.5) #add a phenology label
