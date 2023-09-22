@@ -24,7 +24,7 @@ consider splitting data module into subtree of io, functions, etc
 '''
 
 
-seasons = [
+season_names = [
         "2002-2003",
         "2003-2004",
         "2004-2005",
@@ -45,14 +45,15 @@ def main():
     phenology_df = data.get_phenology_dataframe()
 
     # run calculations
-    l2, cos = compute.similarity()
-    dbscan = compute.dbscan()
-    k5 = compute.k_span(5)
-    k10 = compute.k_span(10)
+    seasons = range(10, 20)
+    l2, cos = compute.similarity(seasons)
+    dbscan = compute.dbscan(seasons)
+    k5 = compute.k_span(5, seasons)
+    k10 = compute.k_span(10, seasons)
 
     # graph
-    for s in range(10, 20): #for each season
-        cur_season = seasons[s-10]
+    for s in seasons: #for each season
+        cur_season = season_names[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
 
         # output graph euclidean / l2

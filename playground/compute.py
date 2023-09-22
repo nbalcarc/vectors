@@ -6,25 +6,25 @@ import sklearn.cluster
 import data
 
 
-def similarity() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+def similarity(seasons: range) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
     """Compute L2 distance and cosine similarity, returns sizes 249 and 249"""
     state_vectors, _, _ = data.load_data_numpy()
-    ret_l2 = np.zeros((10, 249), dtype = np.float32)
-    ret_cos = np.zeros((10, 249), dtype = np.float32)
+    ret_l2 = np.zeros((len(seasons), 249), dtype = np.float32)
+    ret_cos = np.zeros((len(seasons), 249), dtype = np.float32)
 
     # iterate through all 10 seasons
-    for s in range(10, 20):
+    for s in seasons:
         cur_vecs: npt.NDArray[np.float32] = state_vectors[s][1:-1] #exclude first and last days
         for i in range(249): #for all elements (except the last one)
-            ret_l2[s-10][i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
-            ret_cos[s-10][i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
+            ret_l2[s-seasons[0]][i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
+            ret_cos[s-seasons[0]][i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
     return (ret_l2, ret_cos)
 
 
-def dbscan() -> npt.NDArray[np.int32]:
+def dbscan(seasons: range) -> npt.NDArray[np.int32]:
     """Runs DBSCAN, returns size 250"""
     state_vectors, _, _ = data.load_data_numpy()
-    ret = np.zeros((10, 250), dtype = np.int32)
+    ret = np.zeros((len(seasons), 250), dtype = np.int32)
 
     eps = 3.0 #maximum distance for two points to be in the same neighborhood
     min_samples = 4 #samples required to be considered a core point
@@ -34,21 +34,21 @@ def dbscan() -> npt.NDArray[np.int32]:
             min_samples = min_samples,
             )
 
-    for s in range(10, 20): #cover each season
+    for s in seasons: #cover each season
         cur_states = state_vectors[s][1:-1] #grab state vectors for just this season
         fitted = model.fit(cur_states) #need to fit to X, must find what X to give it
-        ret[s-10] = fitted.labels_
+        ret[s-seasons[0]] = fitted.labels_
 
     return ret
 
 
-def k_span(k: int) -> npt.NDArray[np.float32]:
+def k_span(k: int, seasons: range) -> npt.NDArray[np.float32]:
     """Runs Ananth's K-scan, returns size 250-k"""
     state_vectors, _, _ = data.load_data_numpy()
-    ret = np.zeros((10, 250-k), dtype = np.float32)
+    ret = np.zeros((len(seasons), 250-k), dtype = np.float32)
 
     # for each season
-    for s in range(10, 20): #cover each season
+    for s in seasons: #cover each season
         cur_states = state_vectors[s][1:-1] #grab state vectors for just this season
 
         # for each day
@@ -66,7 +66,7 @@ def k_span(k: int) -> npt.NDArray[np.float32]:
                         if dist > max:
                             max = dist
 
-            ret[s-10][i] = max
+            ret[s-seasons[0]][i] = max
 
     return ret
 
