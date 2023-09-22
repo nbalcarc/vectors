@@ -56,14 +56,14 @@ def main():
         cur_season = season_names[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
 
-        # output graph euclidean / l2
+        # output graph l2
         plt.close()
         plt.clf()
         plt.figure(figsize = (6.4, 4.8), dpi = 100)
         plt.plot(list(range(1, 250)), l2[s-10])
-        plt.title("Euclidean Distances " + cur_season)
+        plt.title("L2 Distances " + cur_season)
         insert_phenology(cur_phenologies, 0.5)
-        plt.savefig("output_graphs/euclidean_" + cur_season + ".png")
+        plt.savefig("output_graphs/l2_" + cur_season + ".png")
 
         # output graph cosine similarity
         plt.close()
