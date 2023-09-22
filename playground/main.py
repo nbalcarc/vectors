@@ -8,6 +8,22 @@ import compute
 import columns as col
 
 
+'''
+Notes:
+
+state_vectors has only values between -1 and 1
+with 2048 dimensions, this means a vector can be a maximum of 45.254833995939045 in length (sqrt of 2048)
+
+want to output graphs for seasons 2002-2003 through 2011-2012, which are indices 10 through 19
+
+want to compute different clusters of points, and these clusters will color the points on the graph
+    - a cluster could be revisted later theoretically, so it will have two+ areas of the graph of the same color
+
+consider splitting data module into subtree of io, functions, etc
+
+'''
+
+
 seasons = [
         "2002-2003",
         "2003-2004",
@@ -24,25 +40,17 @@ seasons = [
 
 def main():
     """Main entry point."""
-    #testing.torch_testing()
-    #testing.torch_testing_regression()
 
-    #data.save_data_interoperable()
-    #data.save_data()
-
+    # retrieve phenology data
     phenology_df = data.get_phenology_dataframe()
 
+    # run calculations
     l2, cos = compute.similarity()
     dbscan = compute.dbscan()
     k5 = compute.k_span(5)
     k10 = compute.k_span(10)
 
-    print(l2.shape)
-    print(cos.shape)
-    print(dbscan.shape)
-    print(k5.shape)
-    print(k10.shape)
-
+    # graph
     for s in range(10, 20): #for each season
         cur_season = seasons[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
@@ -70,7 +78,6 @@ def main():
         plt.clf()
         plt.figure(figsize = (6.4, 4.8), dpi = 100)
         plt.plot(list(range(1,251)), dbscan[s-10])
-        #plt.title(f"DBSCAN {cur_season} eps={eps}, min_samples={min_samples}")
         plt.title(f"DBSCAN {cur_season}")
         insert_phenology(cur_phenologies, 0.5)
         plt.savefig("output_graphs/dbscan_" + cur_season + ".png")
@@ -94,9 +101,6 @@ def main():
         plt.savefig(f"output_graphs/kspan10_" + cur_season + ".png")
 
 
-
-
-
 def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     """Grab the phenology data for the current season"""
     cur: pd.DataFrame = df[df[col.SEASON] == season] #filter to only the current season
@@ -108,14 +112,11 @@ def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     return short
 
 
-
 # adds phenology data to the graph, asks for a y-coordinate of the labels
 def insert_phenology(phenologies: pd.DataFrame, y_coordinate: float):
     for row in phenologies.iterrows():
         plt.axvline(row[1][1], color = "red") #graph at the specified index
         plt.text(row[1][1], y_coordinate, row[1][0], rotation=90, alpha=0.5) #add a phenology label
-
-
 
 if __name__ == "__main__":
     main()
