@@ -14,7 +14,8 @@ def main():
 
     compute.similarity()
     compute.dbscan()
-    compute.k_span()
+    compute.k_span(5)
+    compute.k_span(10)
 
 
 if __name__ == "__main__":
