@@ -52,18 +52,18 @@ def main():
     k5 = compute.k_span(seasons, 5)
     k10 = compute.k_span(seasons, 10)
 
-    print(cluster_max)
-    print(cluster_avg)
     '''
     at the end maybe plot all the dbscan results overlaid, each with a low opacity
+
+    plot the cluster data in an table maybe (try using pandas and converting to a matplotlib table)
     '''
+
+    rows = ["Max", "Avg"]
 
     # graph
     for s in seasons: #for each season
         cur_season = season_names[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
-
-        
 
         # output graph dbscan
         plt.close()
@@ -73,6 +73,16 @@ def main():
         plt.title(f"DBSCAN {cur_season}")
         insert_phenology(cur_phenologies, 0.5)
         plt.savefig("output_graphs/dbscan_" + cur_season + ".png")
+
+        # output table clusters
+        cur_max = cluster_max[s-10]
+        cur_avg = cluster_avg[s-10]
+        columns_num = len(cur_max)
+        columns = [f"Cluster {i}" for i in range(columns_num - 1)]
+        plt.close()
+        plt.clf()
+        plt.table(cellText = "ab", rowLabels = rows, colLabels = columns)
+        plt.savefig(f"output_graphs/test_table.png")
 
         # output graph k-span 5
         plt.close()
