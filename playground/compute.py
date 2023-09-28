@@ -7,7 +7,7 @@ import data
 
 
 def dbscan(seasons: range, eps: float, min_samples: int) -> npt.NDArray[np.int32]:
-    """Runs DBSCAN, returns size 250"""
+    """Runs DBSCAN, returns size (seasons, 250)"""
     state_vectors, _, _ = data.load_data_numpy()
     ret = np.zeros((len(seasons), 250), dtype = np.int32)
 
@@ -24,8 +24,8 @@ def dbscan(seasons: range, eps: float, min_samples: int) -> npt.NDArray[np.int32
     return ret
 
 
-def k_span(k: int, seasons: range) -> npt.NDArray[np.float32]:
-    """Runs Ananth's K-span, returns size 250-k"""
+def k_span(seasons: range, k: int) -> npt.NDArray[np.float32]:
+    """Runs Ananth's K-span, returns size (seasons, 250-k)"""
     state_vectors, _, _ = data.load_data_numpy()
     ret = np.zeros((len(seasons), 250-k), dtype = np.float32)
 
@@ -51,6 +51,45 @@ def k_span(k: int, seasons: range) -> npt.NDArray[np.float32]:
 
     return ret
 
+
+def cluster_stats(seasons: range, clusters: npt.NDArray[np.int32]) -> tuple[list[npt.NDArray[np.float64]], list[npt.NDArray[np.float64]]]:
+    """Finds the cluster's stats"""
+    state_vectors, _, _ = data.load_data_numpy()
+    clusters_max = [None]*len(seasons)
+    clusters_avg = [None]*len(seasons)
+
+    # for each season
+    for i, s in enumerate(seasons): #cover each season
+        cur_states = state_vectors[s][1:-1] #grab state vectors for just this season
+        cur_clusters = clusters[i] #grab cluster labels for points
+        num_clusters = np.max(cur_clusters) + 2 #includes outliers
+
+        cur_max = np.zeros(num_clusters)
+        cur_avg = np.zeros(num_clusters)
+        cur_num = np.zeros(num_clusters) #keep track of size of clusters
+
+        #find the stats in a cluster
+        for p in range(250): #for each point
+            cur_cluster = cur_clusters[p]
+            cur_num[cur_cluster] += 1 #increment the count
+            for q in range(250): #for every other point
+                if p == q: #skip when we're comparing a day to itself
+                    continue
+                if cur_clusters[p] != cur_clusters[q]: #skip when the cluster doesn't match
+                    continue
+                dist = np.linalg.norm(cur_states[p]-cur_states[q]) #get distance
+                if cur_max[cur_cluster] < dist: #update the new max distance
+                    cur_max[cur_cluster] = dist
+                cur_avg[cur_cluster] += dist
+
+        for c in range(num_clusters):
+            cur_avg[c] = cur_avg[c] / cur_num[c] #divide the sum by the num of points
+
+        # store the current stats into the return values
+        clusters_max[i] = cur_max
+        clusters_avg[i] = cur_avg
+
+    return clusters_max, clusters_avg
 
 
 

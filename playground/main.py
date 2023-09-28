@@ -48,17 +48,14 @@ def main():
     # run calculations
     seasons = range(10, 20)
     dbscan = compute.dbscan(seasons, eps = 3.0, min_samples = 4)
-    k5 = compute.k_span(5, seasons)
-    k10 = compute.k_span(10, seasons)
+    cluster_max, cluster_avg = compute.cluster_stats(seasons, dbscan)
+    k5 = compute.k_span(seasons, 5)
+    k10 = compute.k_span(seasons, 10)
 
+    print(cluster_max)
+    print(cluster_avg)
     '''
-    for every single cluster in each season, we want to grab the average distance between choose 2
-        points, and the max distance between clusters (can be done in the same loop)
-
-    switch the kspan algorithm to use average instead of maximum, should be more useful
-
     at the end maybe plot all the dbscan results overlaid, each with a low opacity
-
     '''
 
     # graph
@@ -66,8 +63,7 @@ def main():
         cur_season = season_names[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
 
-        num_clusters = np.max(cur_season) + 1 #includes outliers
-
+        
 
         # output graph dbscan
         plt.close()
