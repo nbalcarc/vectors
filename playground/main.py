@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 import data
 import predict
@@ -46,33 +47,27 @@ def main():
 
     # run calculations
     seasons = range(10, 20)
-    l2, cos = compute.similarity(seasons)
-    dbscan = compute.dbscan(seasons)
+    dbscan = compute.dbscan(seasons, eps = 3.0, min_samples = 4)
     k5 = compute.k_span(5, seasons)
     k10 = compute.k_span(10, seasons)
+
+    '''
+    for every single cluster in each season, we want to grab the average distance between choose 2
+        points, and the max distance between clusters (can be done in the same loop)
+
+    switch the kspan algorithm to use average instead of maximum, should be more useful
+
+    at the end maybe plot all the dbscan results overlaid, each with a low opacity
+
+    '''
 
     # graph
     for s in seasons: #for each season
         cur_season = season_names[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
 
-        # output graph l2
-        plt.close()
-        plt.clf()
-        plt.figure(figsize = (6.4, 4.8), dpi = 100)
-        plt.plot(list(range(1, 250)), l2[s-10])
-        plt.title("L2 Distances " + cur_season)
-        insert_phenology(cur_phenologies, 0.5)
-        plt.savefig("output_graphs/l2_" + cur_season + ".png")
+        num_clusters = np.max(cur_season) + 1 #includes outliers
 
-        # output graph cosine similarity
-        plt.close()
-        plt.clf()
-        plt.figure(figsize = (6.4, 4.8), dpi = 100)
-        plt.plot(list(range(1, 250)), cos[s-10])
-        plt.title("Cosine Similarities " + cur_season)
-        insert_phenology(cur_phenologies, 1450)
-        plt.savefig("output_graphs/cosine_" + cur_season + ".png")
 
         # output graph dbscan
         plt.close()
