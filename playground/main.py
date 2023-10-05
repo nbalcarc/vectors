@@ -49,6 +49,9 @@ def main():
     seasons = range(10, 20)
     dbscan = compute.dbscan(seasons, eps = 3.0, min_samples = 4)
     cluster_max, cluster_avg = compute.cluster_stats(seasons, dbscan)
+    print(len(cluster_max))
+    print(len(cluster_avg))
+    
     k5 = compute.k_span(seasons, 5)
     k10 = compute.k_span(seasons, 10)
 
@@ -56,14 +59,34 @@ def main():
     at the end maybe plot all the dbscan results overlaid, each with a low opacity
 
     plot the cluster data in an table maybe (try using pandas and converting to a matplotlib table)
+
+
     '''
 
     rows = ["Max", "Avg"]
 
     # graph
     for s in seasons: #for each season
+        
         cur_season = season_names[s-10]
         cur_phenologies = phenology_for_season(phenology_df, cur_season)
+
+        # organize cluster stats
+        num_clusters = cluster_max[s-10].shape[0]
+        cur_stats = np.zeros((3, num_clusters))
+        cur_stats[0,:] = cluster_max[s-10] #load the maxs
+        cur_stats[1,:] = cluster_avg[s-10] #load the avgs
+        cur_stats[2,:] = cur_stats[0,:] / cur_stats[1,:] #calculate the factors
+        df_stats = pd.DataFrame(cur_stats) #easy to generate a table from a pandas dataframe so we do that conversion here
+
+        # output table cluster stats
+        fig, ax = plt.subplots()
+        fig.patch.set_visible(False)
+        ax.axis("off")
+        ax.axis("tight")
+        table = ax.table(cellText=df_stats.values, colLabels=df_stats.columns, rowLabels=["Max", "Avg", "Factor"], loc="center")
+        fig.tight_layout()
+        plt.savefig("output_graphs/cluster_stats_" + cur_season + ".png", dpi=300)
 
         # output graph dbscan
         plt.close()

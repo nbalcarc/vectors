@@ -53,7 +53,7 @@ def k_span(seasons: range, k: int) -> npt.NDArray[np.float32]:
 
 
 def cluster_stats(seasons: range, clusters: npt.NDArray[np.int32]) -> tuple[list[npt.NDArray[np.float64]], list[npt.NDArray[np.float64]]]:
-    """Finds the cluster's stats"""
+    """Finds the cluster's stats, returns a list of numpy arrays containing variable numbers of clusters"""
     state_vectors, _, _ = data.load_data_numpy()
     clusters_max = [None]*len(seasons)
     clusters_avg = [None]*len(seasons)
@@ -66,24 +66,24 @@ def cluster_stats(seasons: range, clusters: npt.NDArray[np.int32]) -> tuple[list
 
         cur_max = np.zeros(num_clusters)
         cur_avg = np.zeros(num_clusters)
-        cur_num = np.zeros(num_clusters) #keep track of size of clusters
+        avg_num = np.zeros(num_clusters) #keep track of number of calculations for later
 
         #find the stats in a cluster
         for p in range(250): #for each point
-            cur_cluster = cur_clusters[p]
-            cur_num[cur_cluster] += 1 #increment the count
+            cur_cluster = cur_clusters[p] #get the current point's cluster
             for q in range(250): #for every other point
                 if p == q: #skip when we're comparing a day to itself
                     continue
-                if cur_clusters[p] != cur_clusters[q]: #skip when the cluster doesn't match
+                if cur_cluster != cur_clusters[q]: #skip when the cluster doesn't match
                     continue
                 dist = np.linalg.norm(cur_states[p]-cur_states[q]) #get distance
                 if cur_max[cur_cluster] < dist: #update the new max distance
                     cur_max[cur_cluster] = dist
                 cur_avg[cur_cluster] += dist
+                avg_num[cur_cluster] += 1 #increment the count of averages
 
         for c in range(num_clusters):
-            cur_avg[c] = cur_avg[c] / cur_num[c] #divide the sum by the num of points
+            cur_avg[c] = cur_avg[c] / avg_num[c] #divide the sum by the num of calculations, and remove repeats
 
         # store the current stats into the return values
         clusters_max[i] = cur_max
