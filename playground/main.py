@@ -147,6 +147,17 @@ def main():
         insert_phenology(cur_phenologies, 3)
         plt.savefig(f"output_graphs/dbscan_kspan10_" + cur_season + ".png")
 
+    # output graph all clusters
+    plt.close()
+    plt.clf()
+    plt.figure(figsize = (6.4, 4.8), dpi = 100)
+    for s in seasons: #for each season
+        cur_season = season_names[s-10]
+        cur_phenologies = phenology_for_season(phenology_df, cur_season)
+        plt.plot(list(range(1,251)), dbscan[s-10], alpha = 0.2)
+    plt.title(f"DBSCAN All Seasons")
+    plt.savefig("output_graphs/dbscan_all.png")
+
 
 
 def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
