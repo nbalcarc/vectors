@@ -5,7 +5,62 @@ import pandas as pd
 import columns as col
 
 
-def load_data_original() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+def load_data_embedded():
+    """Reads and returns embedded data for the specified (or all) cultivar."""
+    with open("concat_embedding_LTE_pred.pkl", "rb") as file:
+        raw_lte = pickle.load(file)
+        #print(raw_lte["Riesling"]["trial_0"]["0"]["10"].shape)
+    #18 cultivars, 3 trials, 337 something, 3 lte values, 366 something
+
+    with open("concat_embedding_penul_vectors.pkl", "rb") as file:
+        raw_penul = pickle.load(file)
+        print(raw_penul["Riesling"]["trial_0"]["0"][0].shape)
+    #18 cultivars, 3 trials, 32 something, 366 something, 1024 vector
+
+    with open("concat_embedding_rnn_vectors.pkl", "rb") as file:
+        raw_rnn = pickle.load(file)
+    #18 cultivars, 3 trials, 32 something, 366 days (start first day of dormancy and includes summer), 2048 vector
+
+    lte = dict()
+    penul = dict()
+    rnn = dict()
+
+    # lte 
+    for i in raw_lte.keys(): #cultivars
+        cur = np.zeros((3, 337, 3, 366), dtype = np.float32)
+        cur_cultivar_data = raw_lte[i]
+        for j in range(3): #trials
+            for k in range(337): #something
+                for l in range(3): #lte value
+                    cur[j][k][l] = cur_cultivar_data[f"trial_{j}"][str(k)][str(l*40+10)]
+        lte[i] = cur
+
+    # penul
+    for i in raw_penul.keys(): #cultivars
+        cur = np.zeros((3, 32, 366, 1024), dtype = np.float32)
+        cur_cultivar_data = raw_penul[i]
+        for j in range(3): #trials
+            for k in range(32): #seasons, DIFFER BETWEEN CULTIVARS
+                cur[j][k] = cur_cultivar_data[f"trial_{j}"][str(k)][0]
+        penul[i] = cur
+
+    # rnn
+    for i in raw_rnn.keys(): #cultivars
+        cur = np.zeros((3, 32, 366, 2048), dtype = np.float32)
+        cur_cultivar_data = raw_rnn[i]
+        for j in range(3): #trials
+            for k in range(32): #seasons
+                cur[j][k] = cur_cultivar_data[f"trial_{j}"][str(k)][0]
+        rnn[i] = cur
+
+
+
+
+
+    return lte, penul, rnn
+
+
+def old_load_data_original() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
     """Reads and returns data from the pickle files."""
 
     with open("state_vectors.pkl", 'rb') as file:
@@ -32,16 +87,16 @@ def load_data_original() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float3
     return state_vectors, vectors, lte
 
 
-def convert_data_numpy():
+def old_convert_data_numpy():
     """Saves the numpy arrays."""
-    state_vectors, vectors, lte = load_data_original()
+    state_vectors, vectors, lte = old_load_data_original()
 
     np.save("state_vectors.npy", state_vectors)
     np.save("vectors.npy", vectors)
     np.save("lte.npy", lte)
 
 
-def load_data_numpy() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+def old_load_data_numpy() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
     """Loads the numpy arrays."""
     state_vectors: npt.NDArray[np.float32] = np.load("state_vectors.npy")
     vectors: npt.NDArray[np.float32] = np.load("vectors.npy")
@@ -50,14 +105,15 @@ def load_data_numpy() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32],
     return state_vectors, vectors, lte
 
 
-def convert_data_interoperable():
+def old_convert_data_interoperable():
     """Saves the data as a raw binary file, good for language interoperability."""
-    state_vectors, vectors, lte = load_data_original()
+    state_vectors, vectors, lte = old_load_data_original()
     state_vectors.tofile("state_vectors.data")
     vectors.tofile("vectors.data")
     lte.tofile("lte.data")
 
 
+# TODO update this function so you can retrieve the phenology for any cultivar
 def get_phenology_dataframe() -> pd.DataFrame:
     """Returns the phenology dataframe with dormancy days"""
     df_raw = pd.read_csv('ColdHardiness_Grape_Prosser_Riesling.csv', sep=',')

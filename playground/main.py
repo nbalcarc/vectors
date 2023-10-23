@@ -41,6 +41,9 @@ season_names = [
 
 def main():
     """Main entry point."""
+    data.load_data_embedded()
+
+    return
 
     # retrieve phenology data
     phenology_df = data.get_phenology_dataframe()
