@@ -19,7 +19,6 @@ splitOnCustom string delim ignore = splitHelper string delim ignore [] []
             | otherwise = splitHelper xs delim ignore (buf ++ [x]) accum --build buf
 
 
-
 -- | Group trial data together
 groupTrials :: [[String]] -> String -> [[String]]
 groupTrials [] [] = []
@@ -53,6 +52,21 @@ combineSeasons ((name, lis):xs) (name1, lis1)
     | otherwise = (name1, [lis1]):(name, reverse lis):xs
 
 
+-- | Converts parsed data to printable form
+printableCultivars :: String -> (String, [[Integer]]) -> String
+printableCultivars str (name, seasons) = str ++ (name ++ "\n" ++ printHelper seasons ++ "\n")
+    where
+        -- | Converts one cultivar's trials to a string
+        printHelper :: [[Integer]] -> String
+        printHelper [] = []
+        printHelper trials = concatMap (\x -> helperHelper x ++ "\n") trials
+            where
+                -- | Converts one list of integers to a string
+                helperHelper :: [Integer] -> String
+                helperHelper [] = []
+                helperHelper season = foldl (\accum x -> accum ++ (show x ++ " ")) [] season
+
+
 -- | Main entry point
 main :: IO ()
 main = do
@@ -66,4 +80,6 @@ main = do
     let clipped = map (second (map snd)) sorted --converts second element to just its second element (num)
     let finished = reverse $ foldl combineSeasons [] clipped
     print finished 
+    let printable = foldl printableCultivars [] finished
+    writeFile "inputs/seasons_parsed.txt" printable
 
