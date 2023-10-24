@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import columns as col
-
+from typing import Any
 
 
 def load_data_embedded():
@@ -32,7 +32,7 @@ def load_data_embedded():
         for i, t in enumerate(["trial_0", "trial_1", "trial_2"]): #for each trial
             for s in range(count): #for each of this cultivar's seasons, MAKE SURE THIS IS DONE IN THE RIGHT ORDER
                 for d in range(366): #for each day of the season
-                    data_rnn[i, s, d] = raw_rnn[cultivar_name_og][t][f"{trials[i][s]}"][0][d]
+                    data_rnn[i, s, d] = raw_rnn[cultivar_name_og][t][f"{trials[i][s]}"][0][d] #the np array has a 1-width dimension for some reason
                     data_penul[i, s, d] = raw_penul[cultivar_name_og][t][f"{trials[i][s]}"][0][d]
 
         raw_rnn[cultivar_name_og] = None
@@ -43,61 +43,54 @@ def load_data_embedded():
     return (penul_dict, rnn_dict)
 
 
+def load_data_embedded_wrapper() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Reads and returns embedded data."""
+    #18 cultivars, 3 trials, x seasons, 366 days (starts on first day of dormancy), 2048 vector
+    with open("inputs/seasons_parsed.txt", "r") as file:
+        cultivar_seasons = file.read().splitlines()
+    rnn_dict = dict()
+    penul_dict = dict()
+    cultivars = []
 
-
-def old_load_data_embedded():
-    """Reads and returns embedded data for the specified (or all) cultivar."""
-    with open("inputs/concat_embedding_LTE_pred.pkl", "rb") as file:
-        raw_lte = pickle.load(file)
-        #print(raw_lte["Riesling"]["trial_0"]["0"]["10"].shape)
-    #18 cultivars, 3 trials, 337 something, 3 lte values, 366 something
-
-    with open("inputs/concat_embedding_penul_vectors.pkl", "rb") as file:
-        raw_penul = pickle.load(file)
-        print(raw_penul["Riesling"]["trial_0"]["0"][0].shape)
-    #18 cultivars, 3 trials, 32 something, 366 something, 1024 vector
+    for i in range(len(cultivar_seasons) // 5): #for each cultivar
+        cultivar_name = cultivar_seasons[i*5]
+        trial0 = list(map(lambda x: int(x), cultivar_seasons[i*5+1].split()))
+        trial1 = list(map(lambda x: int(x), cultivar_seasons[i*5+2].split()))
+        trial2 = list(map(lambda x: int(x), cultivar_seasons[i*5+3].split()))
+        cultivars.append((cultivar_name, [trial0, trial1, trial2]))
 
     with open("inputs/concat_embedding_rnn_vectors.pkl", "rb") as file:
         raw_rnn = pickle.load(file)
-    #18 cultivars, 3 trials, 32 something, 366 days (start first day of dormancy and includes summer), 2048 vector
+    rnn_dict = load_data_embedded_internal(cultivars, raw_rnn, 2048)
+    del raw_rnn
 
-    lte = dict()
-    penul = dict()
-    rnn = dict()
+    with open("inputs/concat_embedding_penul_vectors.pkl", "rb") as file:
+        raw_penul = pickle.load(file)
+    penul_dict = load_data_embedded_internal(cultivars, raw_penul, 1024)
+    del raw_penul
 
-    # lte 
-    for i in raw_lte.keys(): #cultivars
-        cur = np.zeros((3, 337, 3, 366), dtype = np.float32)
-        cur_cultivar_data = raw_lte[i]
-        for j in range(3): #trials
-            for k in range(337): #something
-                for l in range(3): #lte value
-                    cur[j][k][l] = cur_cultivar_data[f"trial_{j}"][str(k)][str(l*40+10)]
-        lte[i] = cur
-
-    # penul
-    for i in raw_penul.keys(): #cultivars
-        cur = np.zeros((3, 32, 366, 1024), dtype = np.float32)
-        cur_cultivar_data = raw_penul[i]
-        for j in range(3): #trials
-            for k in range(32): #seasons, DIFFER BETWEEN CULTIVARS
-                cur[j][k] = cur_cultivar_data[f"trial_{j}"][str(k)][0]
-        penul[i] = cur
-
-    # rnn
-    for i in raw_rnn.keys(): #cultivars
-        cur = np.zeros((3, 32, 366, 2048), dtype = np.float32)
-        cur_cultivar_data = raw_rnn[i]
-        for j in range(3): #trials
-            for k in range(32): #seasons
-                cur[j][k] = cur_cultivar_data[f"trial_{j}"][str(k)][0]
-        rnn[i] = cur
+    return (penul_dict, rnn_dict)
 
 
+def load_data_embedded_internal(cultivars: list[tuple[str, list[list[int]]]], raw: Any, size: int) -> dict[str, Any]:
+    """Reads and returns embedded data, with support from the wrapper function."""
+    #18 cultivars, 3 trials, x seasons, 366 days (starts on first day of dormancy), 2048 or 1024 vector
+    ret = dict()
+    for i in range(len(cultivars)): #for each cultivar
+        cultivar = cultivars[i]
+        cultivar_name_og = cultivar[0].replace("_", " ")
+        count = len(cultivar[1][0]) #number of seasons for this cultivar
+        data = np.zeros((3, count, 366, size))
+        #18 cultivars, 3 trials, x seasons, 3 lte values, 366 days (starts on first day of dormancy), 2048 vector
 
+        for i, t in enumerate(["trial_0", "trial_1", "trial_2"]): #for each trial
+            for s in range(count): #for each of this cultivar's seasons, MAKE SURE THIS IS DONE IN THE RIGHT ORDER
+                for d in range(366): #for each day of the season
+                    data[i, s, d] = raw[cultivar_name_og][t][f"{cultivar[1][i][s]}"][0][d] #the np array has a 1-width dimension for some reason
 
-
-    return lte, penul, rnn
+        raw[cultivar_name_og] = None #reduce memory usage by deallocating what we no longer need
+        ret[cultivar[0]] = data #save data into the return dictionary
+    return ret
 
 
 def old_load_data_original() -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
