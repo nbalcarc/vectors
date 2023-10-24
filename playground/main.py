@@ -1,10 +1,8 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import time
 
 import data
-import predict
 import testing
 import compute
 import columns as col
@@ -28,8 +26,6 @@ consider splitting data module into subtree of io, functions, etc
 
 def run_task_embedded():
     penul, rnn = data.load_data_embedded_wrapper()
-    print("sleeping")
-    time.sleep(5)
     pass
 
 
