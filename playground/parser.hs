@@ -28,9 +28,9 @@ groupTrials lis line = do
         where
             -- | Helper for groupTrials
             groupHelper :: [[String]] -> [String] -> [[String]]
-            groupHelper [] (num:"Trial":cul_name) = [[intercalate "_" cul_name]] --first group
+            groupHelper [] (num:"Trial":cul_name) = [[intercalate "_" $ reverse cul_name]] --first group
             groupHelper [] _ = []
-            groupHelper ((y:ys):xs) (num:"Trial":cul_name) = [intercalate "_" cul_name]:((y:ys):xs) --new group
+            groupHelper ((y:ys):xs) (num:"Trial":cul_name) = [intercalate "_" $ reverse cul_name]:((y:ys):xs) --new group
             groupHelper ((y:ys):xs) (z:zs) = (z:y:ys):xs --append to existing group
             groupHelper ((y:ys):xs) [] = (y:ys):xs
 

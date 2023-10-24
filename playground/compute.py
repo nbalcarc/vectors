@@ -8,7 +8,7 @@ import data
 
 def dbscan(seasons: range, eps: float, min_samples: int) -> npt.NDArray[np.int32]:
     """Runs DBSCAN, returns size (seasons, 250)"""
-    state_vectors, _, _ = data.load_data_numpy()
+    state_vectors, _, _ = data.old_load_data_numpy()
     ret = np.zeros((len(seasons), 250), dtype = np.int32)
 
     model = sklearn.cluster.DBSCAN(
@@ -26,7 +26,7 @@ def dbscan(seasons: range, eps: float, min_samples: int) -> npt.NDArray[np.int32
 
 def k_span(seasons: range, k: int) -> npt.NDArray[np.float32]:
     """Runs Ananth's K-span, returns size (seasons, 250-k)"""
-    state_vectors, _, _ = data.load_data_numpy()
+    state_vectors, _, _ = data.old_load_data_numpy()
     ret = np.zeros((len(seasons), 250-k), dtype = np.float32)
 
     # for each season
@@ -54,7 +54,7 @@ def k_span(seasons: range, k: int) -> npt.NDArray[np.float32]:
 
 def cluster_stats(seasons: range, clusters: npt.NDArray[np.int32]) -> tuple[list[npt.NDArray[np.float64]], list[npt.NDArray[np.float64]]]:
     """Finds the cluster's stats, returns a list of numpy arrays containing variable numbers of clusters"""
-    state_vectors, _, _ = data.load_data_numpy()
+    state_vectors, _, _ = data.old_load_data_numpy()
     clusters_max = [None]*len(seasons)
     clusters_avg = [None]*len(seasons)
 
@@ -90,22 +90,5 @@ def cluster_stats(seasons: range, clusters: npt.NDArray[np.int32]) -> tuple[list
         clusters_avg[i] = cur_avg
 
     return clusters_max, clusters_avg
-
-
-
-
-#def similarity(seasons: range) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
-#    """Compute L2 distance and cosine similarity, returns sizes 249 and 249"""
-#    state_vectors, _, _ = data.load_data_numpy()
-#    ret_l2 = np.zeros((len(seasons), 249), dtype = np.float32)
-#    ret_cos = np.zeros((len(seasons), 249), dtype = np.float32)
-#
-#    # iterate through all 10 seasons
-#    for s in seasons:
-#        cur_vecs: npt.NDArray[np.float32] = state_vectors[s][1:-1] #exclude first and last days
-#        for i in range(249): #for all elements (except the last one)
-#            ret_l2[s-seasons[0]][i] = np.linalg.norm((cur_vecs[i]-cur_vecs[i+1]))
-#            ret_cos[s-seasons[0]][i] = np.dot(cur_vecs[i], cur_vecs[i+1]) / np.linalg.norm(cur_vecs[i]) * np.linalg.norm(cur_vecs[i+1])
-#    return (ret_l2, ret_cos)
 
 

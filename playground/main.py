@@ -25,7 +25,13 @@ consider splitting data module into subtree of io, functions, etc
 '''
 
 
-season_names = [
+def run_task_embedded():
+    data.load_data_embedded()
+    pass
+
+
+def run_multihead():
+    season_names = [
         "2002-2003",
         "2003-2004",
         "2004-2005",
@@ -37,13 +43,6 @@ season_names = [
         "2010-2011",
         "2011-2012",
         ]
-
-
-def main():
-    """Main entry point."""
-    data.load_data_embedded()
-
-    return
 
     # retrieve phenology data
     phenology_df = data.get_phenology_dataframe()
@@ -162,7 +161,6 @@ def main():
     plt.savefig("output_graphs/dbscan_all.png")
 
 
-
 def phenology_for_season(df: pd.DataFrame, season: str) -> pd.DataFrame:
     """Grab the phenology data for the current season"""
     cur: pd.DataFrame = df[df[col.SEASON] == season] #filter to only the current season
@@ -179,6 +177,12 @@ def insert_phenology(phenologies: pd.DataFrame, y_coordinate: float):
     for row in phenologies.iterrows():
         plt.axvline(row[1][1], color = "red") #graph at the specified index
         plt.text(row[1][1], y_coordinate, row[1][0], rotation=90, alpha=0.5) #add a phenology label
+
+
+def main():
+    """Main entry point."""
+    run_task_embedded()
+    pass
 
 if __name__ == "__main__":
     main()

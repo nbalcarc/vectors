@@ -5,7 +5,47 @@ import pandas as pd
 import columns as col
 
 
+
 def load_data_embedded():
+    """Reads and returns embedded data."""
+    with open("inputs/concat_embedding_penul_vectors.pkl", "rb") as file:
+        raw_penul = pickle.load(file)
+    with open("inputs/concat_embedding_rnn_vectors.pkl", "rb") as file:
+        raw_rnn = pickle.load(file)
+    with open("inputs/seasons_parsed.txt", "r") as file:
+        cultivar_seasons = file.read().splitlines()
+    #18 cultivars, 3 trials, x seasons, 366 days (starts on first day of dormancy), 2048 vector
+    rnn_dict = dict()
+    penul_dict = dict()
+    for i in range(len(cultivar_seasons) // 5): #for each cultivar
+        cultivar_name = cultivar_seasons[i*5]
+        cultivar_name_og = cultivar_name.replace("_", " ")
+        trial0 = list(map(lambda x: int(x), cultivar_seasons[i*5+1].split()))
+        trial1 = list(map(lambda x: int(x), cultivar_seasons[i*5+2].split()))
+        trial2 = list(map(lambda x: int(x), cultivar_seasons[i*5+3].split()))
+        trials = [trial0, trial1, trial2]
+        count = len(trial0)
+        data_rnn = np.zeros((3, count, 366, 2048))
+        data_penul = np.zeros((3, count, 366, 1024))
+        #18 cultivars, 3 trials, x seasons, 3 lte values, 366 days (starts on first day of dormancy), 2048 vector
+
+        for i, t in enumerate(["trial_0", "trial_1", "trial_2"]): #for each trial
+            for s in range(count): #for each of this cultivar's seasons, MAKE SURE THIS IS DONE IN THE RIGHT ORDER
+                for d in range(366): #for each day of the season
+                    data_rnn[i, s, d] = raw_rnn[cultivar_name_og][t][f"{trials[i][s]}"][0][d]
+                    data_penul[i, s, d] = raw_penul[cultivar_name_og][t][f"{trials[i][s]}"][0][d]
+
+        raw_rnn[cultivar_name_og] = None
+        raw_penul[cultivar_name_og] = None
+
+        rnn_dict[cultivar_name] = data_rnn
+        penul_dict[cultivar_name] = data_penul
+    return (penul_dict, rnn_dict)
+
+
+
+
+def old_load_data_embedded():
     """Reads and returns embedded data for the specified (or all) cultivar."""
     with open("inputs/concat_embedding_LTE_pred.pkl", "rb") as file:
         raw_lte = pickle.load(file)
