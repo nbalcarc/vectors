@@ -41,7 +41,28 @@ def run_stats() -> tuple[dict[str, dict[str, int]], dict[str, int]]:
 def main():
     """Main entry point."""
     cultivar_stats, all_stats = run_stats()
-    print(all_stats)
+    all_stats_list = list(all_stats.items())
+    all_stats_list.sort(key = lambda k: k[1], reverse = True)
+
+    cultivar_names = list(cultivar_stats.keys())
+    shared_phens = set(cultivar_stats[cultivar_names[0]].keys()) #list of phenology candidates
+    for cultivar in cultivar_stats.keys():
+        dicti_items = cultivar_stats[cultivar].items()
+        dicti = list(filter(lambda x: x[1] != 0, dicti_items)) #ignore phens with 0 occurences
+        if len(dicti) == 0: #if no phens recorded then skip this cultivar
+            continue
+        phens = list(map(lambda x: x[0], dicti)) #map to only the phenology names (no counts)
+        shared_phens.intersection_update(set(phens)) #intersect
+    trimmed_stats = dict()
+    for i in shared_phens:
+        trimmed_stats[i] = all_stats[i]
+    trimmed_stats_list = list(trimmed_stats.items())
+    trimmed_stats_list.sort(key = lambda k: k[1], reverse = True)
+    print(trimmed_stats_list)
+
+
+
+    #print(all_stats)
 
 if __name__ == "__main__":
     main()
